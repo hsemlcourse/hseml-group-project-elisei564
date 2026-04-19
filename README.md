@@ -1,9 +1,9 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/kOqwghv0)
-# ML Project — [Название проекта]
+# ML Project — Предсказание рыночной стоимости футболиста
 
-**Студент:** [ФИО / Student ID]
+**Студент:** Панов Елисей Николаевич
 
-**Группа:** [Группа]
+**Группа:** 234
 
 
 ## Оглавление
@@ -20,11 +20,14 @@
 
 <!-- Кратко опишите задачу: что предсказываем, какой датасет, метрика качества -->
 
-**Задача:** [Классификация / Регрессия / Кластеризация / ...]
+**Задача:** регрессия — предсказание зарплаты футболиста (`P_WageEUR`).
 
-**Датасет:** [Название и источник датасета]
+**Датасет:** FIFA 21 Players & Teams — Full Database  
+https://www.kaggle.com/datasets/cashncarry/fifa-21-players-teams-full-database
 
-**Целевая метрика:** [Accuracy / F1 / RMSE / ...]
+**Цель:** построить модель, которая по характеристикам игрока и клуба предсказывает его зарплату.
+
+**Целевая метрика:** RMSE в лог-пространстве
 
 
 ## Структура репозитория
@@ -57,8 +60,8 @@
 Этот блок замените способом запуска вашего сервиса.
 ```bash
 # 1. Клонировать репозиторий
-git clone <url>
-cd <repo-name>
+git clone https://github.com/hsemlcourse/hseml-group-project-elisei564.git
+cd hseml-group-project-elisei564
 
 # 2. Создать виртуальное окружение
 python -m venv .venv
