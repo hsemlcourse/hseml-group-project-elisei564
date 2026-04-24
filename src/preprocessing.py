@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 TARGET = "P_WageEUR"
-SEED = 28 # 42
+SEED = 28  # 42
 
 TOP_LEAGUES = {
     "English Premier League (1)",
@@ -57,11 +57,15 @@ def load_data(path) -> pd.DataFrame:
     return df
 
 
-def merge_data(df_players: pd.DataFrame, df_teams: pd.DataFrame) -> pd.DataFrame:
+def merge_data(df_players: pd.DataFrame,
+               df_teams: pd.DataFrame) -> pd.DataFrame:
     """Добавляет префиксы и мержит игроков с командами по названию клуба."""
     df_players = df_players.add_prefix("P_")
     df_teams = df_teams.add_prefix("C_")
-    df = df_players.merge(df_teams, how="left", left_on="P_Club", right_on="C_Name")
+    df = df_players.merge(
+        df_teams, how="left",
+        left_on="P_Club", right_on="C_Name"
+    )
     print(f"После merge: {df.shape[0]:,} строк × {df.shape[1]} столбцов")
     return df
 
@@ -122,11 +126,14 @@ def build_league_rank(train_df: pd.DataFrame) -> dict:
     return ranks.to_dict()
 
 
-def feature_engineering(df: pd.DataFrame, league_rank_dict: dict) -> pd.DataFrame:
-    """Применяется к каждому сплиту отдельно с одним и тем же league_rank_dict."""
+def feature_engineering(df: pd.DataFrame,
+                        league_rank_dict: dict) -> pd.DataFrame:
+    """Применяется к каждому сплиту отдельно
+      с одним и тем же league_rank_dict."""
     df = df.copy()
 
-    # нелинейная связь рейтинга с зарплатой: звёзды получают непропорционально больше
+    # нелинейная связь рейтинга с зарплатой:
+    # звёзды получают непропорционально больше
     df["OverallSquared"] = df["P_Overall"] ** 2
 
     # нереализованный потенциал — важен при переговорах о контракте
@@ -174,7 +181,8 @@ def prepare_target(df: pd.DataFrame):
     return X, y
 
 
-def run_cp1(players_path: str, teams_path: str, out_dir: str = "../data/processed"):
+def run_cp1(players_path: str, teams_path: str,
+            out_dir: str = "../data/processed"):
     """
     Полный пайплайн без утечки:
     загрузка → merge → очистка → сплит → FE только на трейне → сохранение
@@ -187,8 +195,8 @@ def run_cp1(players_path: str, teams_path: str, out_dir: str = "../data/processe
     train_raw, val_raw, test_raw = raw_split(df)
     league_rank_dict = build_league_rank(train_raw)
     train = encode_data(feature_engineering(train_raw, league_rank_dict))
-    val   = encode_data(feature_engineering(val_raw,   league_rank_dict))
-    test  = encode_data(feature_engineering(test_raw,  league_rank_dict))
+    val = encode_data(feature_engineering(val_raw,   league_rank_dict))
+    test = encode_data(feature_engineering(test_raw,  league_rank_dict))
 
     save_splits(train, val, test, out_dir)
     return train, val, test
