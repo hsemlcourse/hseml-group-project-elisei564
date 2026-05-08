@@ -1,8 +1,11 @@
 import os
 import random
+import sys
 
 import numpy as np
 import pandas as pd
+import kagglehub
+from kagglehub import KaggleDatasetAdapter
 from sklearn.model_selection import train_test_split
 
 TARGET = "P_WageEUR"
@@ -188,7 +191,7 @@ def prepare_target(df: pd.DataFrame):
     return X, y
 
 
-def run_cp1(players_path: str, teams_path: str, out_dir: str = "../data/processed"):
+def run_cp1(players_path: str, teams_path: str, out_dir: str = "data/processed"):
     """Полный пайплайн без утечки."""
     set_seed()
     df_players = load_data(players_path)
@@ -206,3 +209,12 @@ def run_cp1(players_path: str, teams_path: str, out_dir: str = "../data/processe
 
     save_splits(train, val, test, out_dir)
     return train, val, test
+
+if __name__ == "__main__":
+    if not os.path.exists('data/raw/players_fifa21.csv') or not os.path.exists('data/raw/teams_fifa21.csv'):
+        print("Ошибка: Данные не найдены в data/raw/. Пожалуйста, скачайте их согласно инструкции в README.")
+        sys.exit(1)
+    run_cp1(
+        players_path="data/raw/players_fifa21.csv",
+        teams_path="data/raw/teams_fifa21.csv",
+    )
