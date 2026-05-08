@@ -4,8 +4,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-import kagglehub
-from kagglehub import KaggleDatasetAdapter
 from sklearn.model_selection import train_test_split
 
 TARGET = "P_WageEUR"
