@@ -98,7 +98,7 @@ pip install -r requirements.txt
 ```bash
 
 # 5. Запуск линтера
-flake8 .
+flake8 src tests
 
 # 6. Запуск тестов
 docker compose up --build test

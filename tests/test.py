@@ -1,12 +1,9 @@
 import sys
 import os
-sys.path.append(os.path.abspath('..'))
-
 import pytest
 import numpy as np
 import pandas as pd
-
-from  src.preprocessing import (
+from src.preprocessing import (
     TARGET,
     SEED,
     GOOD_FEATURES,
@@ -18,6 +15,7 @@ from  src.preprocessing import (
     raw_split,
     prepare_target,
 )
+sys.path.append(os.path.abspath('..'))
 
 
 # синтетический датафрейм с минимальным набором колонок
@@ -26,7 +24,8 @@ def sample_df():
     np.random.seed(SEED)
     n = 200
     df = pd.DataFrame({
-        "P_Club":            ["Real Madrid"] * 150 + ["Free agent"] * 30 + ["Barca"] * 20,
+        "P_Club":            ["Real Madrid"] * 150 +
+        ["Free agent"] * 30 + ["Barca"] * 20,
         "P_FullName":        [f"Player_{i}" for i in range(n)],
         "P_Age":             np.random.randint(17, 38, n),
         "P_Overall":         np.random.randint(55, 95, n),
@@ -39,12 +38,12 @@ def sample_df():
         "P_PassingTotal":    np.random.randint(35, 90, n),
         "P_DribblingTotal":  np.random.randint(40, 92, n),
         "P_DefendingTotal":  np.random.randint(20, 88, n),
-        "P_PhysicalityTotal":np.random.randint(40, 90, n),
+        "P_PhysicalityTotal": np.random.randint(40, 90, n),
         "P_ValueEUR":        np.random.randint(500_000, 80_000_000, n),
         "P_ContractUntil":   np.random.randint(2021, 2026, n),
         "C_Overall":         np.random.randint(60, 90, n),
         "C_TransferBudget":  np.random.randint(1_000_000, 200_000_000, n),
-        "C_DomesticPrestige":np.random.randint(1, 10, n),
+        "C_DomesticPrestige": np.random.randint(1, 10, n),
         "C_IntPrestige":     np.random.randint(1, 10, n),
         "C_Attack":          np.random.randint(55, 90, n),
         "C_Midfield":        np.random.randint(55, 90, n),
@@ -91,7 +90,7 @@ class TestRemoveOutliers:
     def test_removes_top_1_percent(self, clean_df):
         threshold = clean_df[TARGET].quantile(0.99)
         result = remove_outliers(clean_df)
-        assert result[TARGET].max() < threshold + 1  # небольшой допуск на границу
+        assert result[TARGET].max() < threshold + 1  # небольшой допуск
 
     def test_size_decreases(self, clean_df):
         result = remove_outliers(clean_df)
@@ -113,8 +112,8 @@ class TestRawSplit:
     def test_no_overlap(self, clean_df):
         train, val, test = raw_split(clean_df)
         idx_train = set(train.index)
-        idx_val   = set(val.index)
-        idx_test  = set(test.index)
+        idx_val = set(val.index)
+        idx_test = set(test.index)
         assert idx_train.isdisjoint(idx_val)
         assert idx_train.isdisjoint(idx_test)
         assert idx_val.isdisjoint(idx_test)
@@ -138,10 +137,11 @@ class TestBuildLeagueRank:
         assert leagues_in_train == set(d.keys())
 
     def test_built_on_train_only(self, clean_df):
-        """LeagueRank не должен использовать val/test — строится только по трейну."""
+        """LeagueRank не должен использовать
+            val/test — строится только по трейну."""
         train, val, _ = raw_split(clean_df)
         d_train = build_league_rank(train)
-        d_all   = build_league_rank(clean_df)
+        d_all = build_league_rank(clean_df)
         # Значения могут отличаться — это и есть цель теста
         # Если утечки нет, словари НЕ совпадают (разные медианы)
         assert d_train != d_all or True
@@ -168,7 +168,10 @@ class TestFeatureEngineering:
         train, _, _ = raw_split(clean_df)
         d = build_league_rank(train)
         fe = feature_engineering(train, d)
-        expected = train.loc[fe.index, "P_Potential"] - train.loc[fe.index, "P_Overall"]
+        expected = (
+            train.loc[fe.index, "P_Potential"] -
+            train.loc[fe.index, "P_Overall"]
+        )
         pd.testing.assert_series_equal(
             fe["Growth"].reset_index(drop=True),
             expected.reset_index(drop=True),
