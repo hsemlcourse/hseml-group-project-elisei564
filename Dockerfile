@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 COPY data/ ./data/
-COPY notebooks/ ./notebooks/
 COPY tests/ ./tests/
+COPY app/    ./app/
 
 CMD ["python", "-m", "pytest", "tests/", "-v"]

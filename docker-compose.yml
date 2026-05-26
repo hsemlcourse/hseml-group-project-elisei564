@@ -1,22 +1,26 @@
-version: "3.9"
-
 services:
-  pipeline:
+  api:
     build: .
+    ports:
+      - "8000:8000"
     volumes:
-      - ./data:/app/data
       - ./models:/app/models
-      - ./report:/app/report
-    command: python src/preprocessing.py
+      - ./data:/app/data
+    environment:
+      - MODEL_PATH=models/best_model.joblib
+      - LEAGUE_RANK_PATH=models/league_rank_dict.joblib
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  streamlit:
+    build: .
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000
+    command: streamlit run app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
 
   test:
     build: .
-    command: python -m pytest tests/test.py -v
-
-  train:
-    build: .
-    volumes:
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./report:/app/report
-    command: python src/modeling.py
+    command: python -m pytest tests/ -v

@@ -43,6 +43,8 @@ GOOD_FEATURES = [
     "Club_Strength",
     "LeagueRank",
     "IsTopLeague",
+    "AgeGroup",
+    "ValuePerOverall"
 ]
 
 

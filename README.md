@@ -88,7 +88,7 @@ pip install -r requirements.txt
 ```bash
 
 # 5. Запуск линтера
-flake8 src tests
+flake8 src tests app
 
 # 6. Запуск тестов
 docker compose up --build test
@@ -98,6 +98,9 @@ docker compose up pipeline
 
 # 8. Обучение модели
 docker compose up train
+
+# 9. Запуск веб-интерфейса
+docker compose up api streamlit
 ```
 
 
