@@ -10,10 +10,9 @@
 
 1. [Описание задачи](#описание-задачи)
 2. [Структура репозитория](#структура-репозитория)
-3. [Данные](#данные)
-4. [Запуски](#запуск)
+3. [Запуски](#быстрый-старт)
+4. [Данные](#данные)
 5. [Результаты](#результаты)
-6. [Вывод](#выводы)
 7. [Отчёт](#отчёт)
 
 
@@ -56,12 +55,9 @@ https://www.kaggle.com/datasets/cashncarry/fifa-21-players-teams-full-database
 └── README.md
 ```
 
-## Данные
-- `data/raw/` — исходные файлы
-- `data/processed/` — предобработанные данные
-
 ## Запуск
 
+Этот блок замените способом запуска вашего сервиса.
 ```bash
 # 1. Клонировать репозиторий
 git clone https://github.com/hsemlcourse/hseml-group-project-elisei564.git
@@ -75,30 +71,10 @@ source .venv/bin/activate   # Linux/macOS
 # 3. Установить зависимости
 pip install -r requirements.txt
 ```
-- Перейдите по ссылке на [Kaggle](https://www.kaggle.com/datasets/cashncarry/fifa-21-players-teams-full-database).
-- Нажмите кнопку Download.
-- Скачайте и распакуйте архив.
-- Перенесите файлы players_fifa21.csv и teams_fifa21.csv в директорию проекта:
-```
-└── data/
-    └── raw/
-        ├── players_fifa21.csv
-        └── teams_fifa21.csv
-```
-```bash
 
-# 5. Запуск линтера
-flake8 src tests
-
-# 6. Запуск тестов
-docker compose up --build test
-
-# 7. Сборка и запуск preprocessing pipeline
-docker compose up pipeline
-
-# 8. Обучение модели
-docker compose up train
-```
+## Данные
+- `data/raw/` — исходные файлы
+- `data/processed/` — предобработанные данные
 
 
 ## Результаты
