@@ -1,20 +1,19 @@
 import os
 import random
-import sys
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 TARGET = "P_WageEUR"
-SEED = 42
+SEED = 28  # 42
 
 TOP_LEAGUES = {
-    "English Premier League",
-    "Spanish Primera División",
-    "German 1. Bundesliga",
-    "Italian Serie A",
-    "French Ligue 1",
+    "English Premier League (1)",
+    "Spanish Primera División (1)",
+    "German 1. Bundesliga (1)",
+    "Italian Serie A (1)",
+    "French Ligue 1 (1)",
 }
 
 GOOD_FEATURES = [
@@ -25,7 +24,7 @@ GOOD_FEATURES = [
     "P_IntReputation",
     "P_WeakFoot",
     "P_SkillMoves",
-    # статистика
+    # статы
     "P_PaceTotal",
     "P_ShootingTotal",
     "P_PassingTotal",
@@ -37,15 +36,13 @@ GOOD_FEATURES = [
     "C_TransferBudget",
     "C_DomesticPrestige",
     "C_IntPrestige",
-    # инженерные
+    # FE
     "Growth",
     "OverallSquared",
     "ContractYearsLeft",
     "Club_Strength",
     "LeagueRank",
     "IsTopLeague",
-    "AgeGroup",
-    "ValuePerOverall",
 ]
 
 
@@ -65,8 +62,10 @@ def merge_data(df_players: pd.DataFrame,
     """Добавляет префиксы и мержит игроков с командами по названию клуба."""
     df_players = df_players.add_prefix("P_")
     df_teams = df_teams.add_prefix("C_")
-    df = df_players.merge(df_teams, how="left",
-                          left_on="P_Club", right_on="C_Name")
+    df = df_players.merge(
+        df_teams, how="left",
+        left_on="P_Club", right_on="C_Name"
+    )
     print(f"После merge: {df.shape[0]:,} строк × {df.shape[1]} столбцов")
     return df
 
@@ -81,7 +80,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     for col in num_cols:
         df[col] = df[col].fillna(df[col].median())
 
-    cat_cols = df.select_dtypes(include=["object", "string"]).columns
+    cat_cols = df.select_dtypes(include="object").columns
     for col in cat_cols:
         df[col] = df[col].fillna("Unknown")
 
@@ -99,6 +98,7 @@ def remove_outliers(df: pd.DataFrame) -> pd.DataFrame:
 def raw_split(df: pd.DataFrame):
     """
     Сплит ДО feature engineering — чтобы LeagueRank считался только на трейне.
+    Возвращает сырые (без FE) train/val/test.
     """
     df = df.copy()
     df["_strat"] = pd.qcut(
@@ -119,7 +119,8 @@ def raw_split(df: pd.DataFrame):
 
 def build_league_rank(train_df: pd.DataFrame) -> dict:
     """
-    Считаем LeagueRank ТОЛЬКО на трейне — вызывается после raw_split.
+    Считаем LeagueRank ТОЛЬКО на трейне — вызывается после raw_split,
+    чтобы медиана по лиге не видела val/test зарплаты.
     """
     ranks = train_df.groupby("C_League")[TARGET].median().rank()
     return ranks.to_dict()
@@ -127,46 +128,33 @@ def build_league_rank(train_df: pd.DataFrame) -> dict:
 
 def feature_engineering(df: pd.DataFrame,
                         league_rank_dict: dict) -> pd.DataFrame:
-    """Применяется к каждому сплиту отдельно с
-        одним и тем же league_rank_dict."""
+    """Применяется к каждому сплиту отдельно
+      с одним и тем же league_rank_dict."""
     df = df.copy()
 
-    # нелинейная связь рейтинга с зарплатой
+    # нелинейная связь рейтинга с зарплатой:
+    # звёзды получают непропорционально больше
     df["OverallSquared"] = df["P_Overall"] ** 2
 
-    # нереализованный потенциал
+    # нереализованный потенциал — важен при переговорах о контракте
     df["Growth"] = df["P_Potential"] - df["P_Overall"]
 
-    # годы до конца контракта
+    # сколько лет осталось до конца контракта (FIFA 21 — год 2021)
     if "P_ContractUntil" in df.columns:
         df["ContractYearsLeft"] = df["P_ContractUntil"] - 2021
     else:
         df["ContractYearsLeft"] = 0
 
-    # средняя сила клуба
+    # средняя сила клуба по трём линиям
     df["Club_Strength"] = (
         df["C_Attack"] + df["C_Midfield"] + df["C_Defence"]
     ) / 3
 
-    # ранг лиги — только из трейнового словаря
+    # ранг лиги по медианной зарплате — словарь построен только на трейне
     df["LeagueRank"] = df["C_League"].map(league_rank_dict).fillna(0)
 
     # флаг топ-5 лиги
     df["IsTopLeague"] = df["C_League"].isin(TOP_LEAGUES).astype(int)
-
-    # возрастная группа: нелинейная зависимость зарплаты от возраста
-    # (молодые и ветераны получают меньше пиковых игроков)
-    df["AgeGroup"] = pd.cut(
-        df["P_Age"],
-        bins=[0, 21, 27, 32, 99],
-        labels=[0, 1, 2, 3],  # Youth, Rising, Prime, Veteran
-    ).astype(float)
-
-    # стоимость на единицу рейтинга — косвенный сигнал репутации
-    if "P_ValueEUR" in df.columns:
-        df["ValuePerOverall"] = df["P_ValueEUR"] / (df["P_Overall"] + 1)
-    else:
-        df["ValuePerOverall"] = 0
 
     df.drop(columns=["C_League"], inplace=True)
     return df
@@ -194,35 +182,21 @@ def prepare_target(df: pd.DataFrame):
 
 
 def run_cp1(players_path: str, teams_path: str,
-            out_dir: str = "data/processed"):
-    """Полный пайплайн без утечки."""
-    set_seed()
+            out_dir: str = "../data/processed"):
+    """
+    Полный пайплайн без утечки:
+    загрузка → merge → очистка → сплит → FE только на трейне → сохранение
+    """
     df_players = load_data(players_path)
     df_teams = load_data(teams_path)
     df = merge_data(df_players, df_teams)
     df = clean_data(df)
     df = remove_outliers(df)
-
     train_raw, val_raw, test_raw = raw_split(df)
     league_rank_dict = build_league_rank(train_raw)
-
     train = encode_data(feature_engineering(train_raw, league_rank_dict))
     val = encode_data(feature_engineering(val_raw,   league_rank_dict))
     test = encode_data(feature_engineering(test_raw,  league_rank_dict))
 
     save_splits(train, val, test, out_dir)
     return train, val, test
-
-
-if __name__ == "__main__":
-    if not os.path.exists('data/raw/players_fifa21.csv') or \
-       not os.path.exists('data/raw/teams_fifa21.csv'):
-        print(
-            "Ошибка: Данные не найдены в data/raw/. "
-            "Пожалуйста, скачайте их согласно инструкции в README."
-        )
-        sys.exit(1)
-    run_cp1(
-        players_path="data/raw/players_fifa21.csv",
-        teams_path="data/raw/teams_fifa21.csv",
-    )
